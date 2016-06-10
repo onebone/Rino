@@ -1,0 +1,29 @@
+name: Rino
+version: "1.0"
+author: onebone
+api: [1.0.0]
+main: me.onebone.rino.Main
+
+commands:
+  rino:
+    usage: /rino <create|remove|list|message>
+    description: Rino master command
+    permission: rino.command.rino;rino.command.rino.create;rino.command.rino.remove;rino.command.rino.list;rino.command.rino.message;
+permissions:
+  rino:
+    description: Includes all permissions of Rino
+    children:
+      rino.command:
+        description: Allows player to use all commands of Rino
+        children:
+          rino.command.rino:
+            description: Allows player to use /rino
+            children:
+              rino.command.rino.create:
+                description: Allows player to use /rino create
+              rino.command.rino.remove:
+                description: Allows player to use /rino remove
+              rino.command.rino.list:
+                description: Allows player to use /rino list
+              rino.command.rino.message:
+                description: Allows player to use /rino message

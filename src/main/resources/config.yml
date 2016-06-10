@@ -1,0 +1,2 @@
+# List format which will be shown in player list (%name%, %message%)
+list-format: "Rino: %name%" 
