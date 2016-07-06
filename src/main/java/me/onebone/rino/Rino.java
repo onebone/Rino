@@ -34,7 +34,7 @@ import cn.nukkit.level.Position;
 import cn.nukkit.network.protocol.AddPlayerPacket;
 import cn.nukkit.network.protocol.MovePlayerPacket;
 import cn.nukkit.network.protocol.PlayerListPacket;
-import cn.nukkit.network.protocol.RemovePlayerPacket;
+import cn.nukkit.network.protocol.RemoveEntityPacket;
 
 public class Rino{
 	private Main plugin;
@@ -142,9 +142,8 @@ public class Rino{
 	}
 	
 	public void despawnFrom(Player player){
-		RemovePlayerPacket pk = new RemovePlayerPacket();
+		RemoveEntityPacket pk = new RemoveEntityPacket();
 		pk.eid = this.eid;
-		pk.uuid = this.uuid;
 		player.dataPacket(pk);
 		
 		PlayerListPacket listPk = new PlayerListPacket();
