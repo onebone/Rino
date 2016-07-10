@@ -121,6 +121,8 @@ public class Rino{
 			{
 				this.putBoolean(Entity.DATA_SHOW_NAMETAG, true);
 				this.putBoolean(Entity.DATA_NO_AI, true);
+				this.putLong(Entity.DATA_LEAD_HOLDER, -1);
+				this.putByte(Entity.DATA_LEAD, 0);
 			}
 		};
 		player.dataPacket(pk);
