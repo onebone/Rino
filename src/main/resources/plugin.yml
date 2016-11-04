@@ -1,5 +1,5 @@
 name: Rino
-version: @VERSION@
+version: "@VERSION@"
 author: onebone
 api: [1.0.0]
 main: me.onebone.rino.Main
