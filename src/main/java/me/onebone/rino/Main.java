@@ -23,12 +23,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import cn.nukkit.item.Item;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -53,8 +53,8 @@ import cn.nukkit.utils.Utils;
 
 public class Main extends PluginBase implements Listener{
 	private Map<String, List<Rino>> rinos;
-	private Map<String, String> messages;
-	
+	private Map<String, List<Request>> request;
+
 	@Override
 	public void onEnable(){
 		this.getServer().getPluginManager().registerEvents(this, this);
@@ -69,7 +69,7 @@ public class Main extends PluginBase implements Listener{
 		File file = new File(this.getDataFolder(), "rino.json");
 		
 		rinos = new HashMap<>();
-		messages = new HashMap<>();
+		request = new HashMap<>();
 		try{
 			int count = 0;
 			
@@ -220,14 +220,24 @@ public class Main extends PluginBase implements Listener{
 		if(event.getPacket() instanceof InteractPacket){
 			Player player = event.getPlayer();
 			InteractPacket pk = (InteractPacket) event.getPacket();
+			if(pk.action != InteractPacket.ACTION_LEFT_CLICK) return;
 			
 			Rino rino;
 			if((rino = this.getRinoById(pk.target)) != null){
-				if(messages.containsKey(player.getName())){
-					rino.setMessage(messages.get(player.getName()));
-					messages.remove(player.getName());
+				if(request.containsKey(player.getName().toLowerCase())){
+					for(Request req : request.get(player.getName().toLowerCase())){
+						if(req.getType() == Request.TYPE_MESSAGE){
+							rino.setMessage(req.getValue().toString());
+						}else if(req.getType() == Request.TYPE_NAME){
+							rino.setName(req.getValue().toString());
+						}else if(req.getType() == Request.TYPE_ITEM){
+							rino.setItem((Item) req.getValue());
+						}
+					}
+
+					request.remove(player.getName().toLowerCase());
 					
-					player.sendMessage(TextFormat.GREEN + "Message was set.");
+					player.sendMessage(TextFormat.GREEN + "Option was set.");
 				}else{
 					String message = rino.getMessage();
 					if(message != null && !message.equals("")){
@@ -263,7 +273,7 @@ public class Main extends PluginBase implements Listener{
 					return true;
 				}
 				
-				String name = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+				String name = args[1];
 				Player player = (Player) sender;
 				
 				Rino rino = new Rino(this, new Position(player.x, player.y, player.z, player.level), player.level.getFolderName(), name, "", player.getInventory().getItemInHand(), player.getSkin());
@@ -318,26 +328,102 @@ public class Main extends PluginBase implements Listener{
 					}
 				}
 				sender.sendMessage(output.substring(0, output.length() - 1));
-			}else if(args[0].equals("message")){
+			}else if(args[0].equals("option")){
 				if(!(sender instanceof Player)){
 					sender.sendMessage(new TranslationContainer("commands.generic.ingame"));
 					return true;
 				}
-				
-				if(messages.containsKey(sender.getName())){
-					messages.remove(sender.getName());
-					sender.sendMessage(TextFormat.GREEN + "Cancelled message tagging.");
+
+				if(args.length == 1){
+					sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.usage", "/rino option [-m <message>] [-i <item>] [-n <name>] [-c]"));
 					return true;
 				}
-				
-				if(args.length < 2){
-					sender.sendMessage(new TranslationContainer("commands.generic.usage", command.getUsage()));
-					return true;
+
+				CommandParser.Options options = new CommandParser.Options();
+
+				options.addOption(new CommandParser.Option("m", "message", true));
+				options.addOption(new CommandParser.Option("i", "item", true));
+				options.addOption(new CommandParser.Option("n", "name", true));
+				options.addOption(new CommandParser.Option("c", "clear", false));
+
+				CommandParser parser = new CommandParser(args, options, 1);
+
+				while(parser.hasNext()){
+					try{
+						CommandParser.Value val = parser.getOpt();
+						next: switch(val.getOpt()){
+							case "m": {
+								String message = val.getValue();
+
+								List<Request> list;
+								for(Request req : list = request.getOrDefault(sender.getName().toLowerCase(), new ArrayList<>())){
+									if(req.getType() == Request.TYPE_MESSAGE){
+										req.setValue(message);
+
+										break next;
+									}
+								}
+
+								list.add(new Request(Request.TYPE_MESSAGE, message));
+								request.put(sender.getName().toLowerCase(), list);
+
+								sender.sendMessage(TextFormat.GREEN + "Touch Rino which you want to.");
+								break;
+							}
+							case "i":{
+								String item = val.getValue();
+
+								List<Request> list;
+								for(Request req : list = request.getOrDefault(sender.getName().toLowerCase(), new ArrayList<>())){
+									if(req.getType() == Request.TYPE_ITEM){
+										Item i = Item.fromString(item);
+										req.setValue(i);
+										sender.sendMessage("Set item to " + TextFormat.AQUA + i.getName());
+
+										break next;
+									}
+								}
+
+								Item i = Item.fromString(item);
+								list.add(new Request(Request.TYPE_ITEM, i));
+								request.put(sender.getName().toLowerCase(), list);
+
+								sender.sendMessage(TextFormat.GREEN + "Touch Rino which you want to set item. Item : " + i.getName());
+								break;
+							}
+							case "n": {
+								String name = val.getValue();
+
+								List<Request> list;
+								for(Request req : list = request.getOrDefault(sender.getName().toLowerCase(), new ArrayList<>())){
+									if(req.getType() == Request.TYPE_NAME){
+										req.setValue(name);
+
+										break next;
+									}
+								}
+
+								list.add(new Request(Request.TYPE_NAME, name));
+								request.put(sender.getName().toLowerCase(), list);
+
+								sender.sendMessage(TextFormat.GREEN + "Touch Rino which you want to.");
+								break;
+							}
+							case "c":
+								if(request.remove(sender.getName().toLowerCase()) != null){
+									sender.sendMessage(TextFormat.GREEN + "Your request was cleared.");
+								}else{
+									sender.sendMessage(TextFormat.RED + "You don't have any request.");
+								}
+								break;
+						}
+					}catch(CommandParser.NoArgumentException e){
+						sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.usage", "/rino option [-c <command>] [-m <message>] [-i <item>] [-n <name>]"));
+						return true;
+					}
 				}
-				
-				String message = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-				messages.put(sender.getName(), message);
-				sender.sendMessage(TextFormat.GREEN + "Touch Rino which you want to.");
+
+
 			}else{
 				sender.sendMessage(new TranslationContainer("commands.generic.usage", command.getUsage()));
 			}

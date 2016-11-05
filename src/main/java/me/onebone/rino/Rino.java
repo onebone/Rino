@@ -184,7 +184,27 @@ public class Rino{
 	}
 	
 	public void setMessage(String message){
+		if(message == null){
+			throw new IllegalArgumentException("Message cannot be null");
+		}
+
 		this.message = message;
+	}
+
+	public void setName(String name){
+		if(name == null){
+			throw new IllegalArgumentException("Name cannot be null");
+		}
+
+		this.name = name;
+	}
+
+	public void setItem(Item item){
+		if(item == null){
+			throw new IllegalArgumentException("Item cannot be null");
+		}
+
+		this.item = item;
 	}
 	
 	public Object[] getData(File file){
