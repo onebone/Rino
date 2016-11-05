@@ -10,7 +10,12 @@ NPC plugin for Nukkit
 - /rino create <name>
 - /rino remove <entity id>
 - /rino list [page]
-- /rino message <message>
+- /rino option [-m <message>] [-i <item>] [-n <name>] [-c]
+	- `-m` `--message` Set message
+	- `-i` `--item` Set item
+	- `-n` `--name` Set name
+	- `-c` `--clear` Clear all requests
+	- ie. /rino option `-m` "This is a message" `-i` Dirt `--name` "My name"
 
 ### Permissions
 - rino
